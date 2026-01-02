@@ -52,8 +52,6 @@ app.use(
 
 const PORT = process.env.PORT || 3000;
 
-console.log(process.env)
-console.log(JSON.stringify(process.env))
 
 app.listen(PORT, () => {
   console.info(`server up on port ${PORT}`);
