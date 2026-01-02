@@ -85,7 +85,7 @@ jobs:
           fi
 
           # 3. Enforce exact approved image
-          if ! grep -E "^FROM node:18-alpine" Dockerfile; then
+          if ! grep -E "^FROM (docker\.io/)?node:18-alpine$" Dockerfile; then
             echo "❌ Guardrail violation: unapproved base image used"
             exit 1
           fi
