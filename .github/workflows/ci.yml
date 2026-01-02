@@ -1,10 +1,10 @@
 name: CI
+
 on:
   push:
     branches:
       - "**"
   pull_request:
-
 
 jobs:
   build-test:
@@ -21,6 +21,15 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+
+      - name: Guardrail 1 — Block secret logging
+        run: |
+          echo "Enforcing Guardrail 1: Secrets must not be logged"
+
+          if grep -R "console.log(.*process.env" -n src/; then
+            echo "❌ Guardrail violation detected: secret logging in source code"
+            exit 1
+          fi
 
       - name: Run tests
         run: npm test || echo "No tests configured"
