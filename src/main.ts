@@ -52,6 +52,9 @@ app.use(
 
 const PORT = process.env.PORT || 3000;
 
+// ❌ INTENTIONAL VIOLATION (for DevSecOps testing)
+console.log("JWT SECRET:", process.env.JWT_SECRET);
+
 app.listen(PORT, () => {
   console.info(`server up on port ${PORT}`);
 });
