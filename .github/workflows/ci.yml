@@ -86,11 +86,35 @@ jobs:
           fi
 
       # ------------------------------
-      # Guardrail 3 — Block mutable Docker tags
+      # Guardrail 3 — Immutable image identity & no mutable tags
       # ------------------------------
-      - name: Guardrail 3 — Block mutable Docker image tags
+      - name: Guardrail 3 — Enforce immutable image identity
+        shell: bash
         run: |
-          echo "Enforcing Guardrail 3: No mutable Docker image tags"
+          set -e
+
+          echo "Enforcing Guardrail 3: Immutable image identity"
+
+          IMAGE_NAME="realworld-api"
+          IMAGE_TAG=$(echo "$GITHUB_SHA" | cut -c1-7)
+
+          echo "Computed image: ${IMAGE_NAME}:${IMAGE_TAG}"
+
+          # Sanity check
+          if [ -z "$IMAGE_TAG" ]; then
+            echo "❌ Guardrail violation: Image tag is empty"
+            exit 1
+          fi
+
+          # Block mutable tags explicitly
+          case "$IMAGE_TAG" in
+            latest|dev|prod)
+              echo "❌ Guardrail violation: Mutable image tag detected"
+              exit 1
+              ;;
+          esac
+
+          # Block mutable tags in Dockerfile / CI
           matches=$(
             grep -nE \
               "FROM .*:(latest|dev|prod)\b|docker (build|push).*:(latest|dev|prod)\b" \
@@ -98,26 +122,9 @@ jobs:
               .github/workflows/*.yml \
               2>/dev/null || true
           )
+
           if [ -n "$matches" ]; then
-            echo "❌ Guardrail violation: mutable Docker image tag detected"
-            echo "Offending locations:"
+            echo "❌ Guardrail violation: mutable Docker tag usage detected"
             echo "$matches"
             exit 1
           fi
-      - name: Guardrail 3 — Phase 2: Define immutable image identity
-        shell: bash
-        run: |
-          set -e
-
-          echo "Enforcing Guardrail 3 Phase 2: Immutable image tagging"
-
-          IMAGE_NAME="realworld-api"
-          IMAGE_TAG=$(echo "$GITHUB_SHA" | cut -c1-7)
-
-          echo "Image will be built as: ${IMAGE_NAME}:${IMAGE_TAG}"
-
-          if [ -z "$IMAGE_TAG" ]; then
-            echo "❌ Guardrail violation: Image tag is empty"
-            exit 1
-          fi
-
