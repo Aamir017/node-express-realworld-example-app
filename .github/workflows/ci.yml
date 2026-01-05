@@ -109,3 +109,23 @@ jobs:
             exit 1
           fi
 
+      - name: Guardrail 3 — Phase 2: Enforce immutable image tagging
+        run: |
+          echo "Enforcing Guardrail 3 Phase 2: Immutable image tagging"
+
+          IMAGE_NAME="realworld-api"
+          IMAGE_TAG="${GITHUB_SHA::7}"
+
+          echo "Image will be built as: $IMAGE_NAME:$IMAGE_TAG"
+
+          # Fail if IMAGE_TAG is empty
+          if [ -z "$IMAGE_TAG" ]; then
+            echo "❌ Guardrail violation: Image tag is empty"
+            exit 1
+          fi
+
+          # Block mutable tags explicitly
+          if [[ "$IMAGE_TAG" == "latest" || "$IMAGE_TAG" == "dev" || "$IMAGE_TAG" == "prod" ]]; then
+            echo "❌ Guardrail violation: Mutable image tag detected"
+            exit 1
+          fi
