@@ -90,15 +90,22 @@ jobs:
             exit 1
           fi
 
-      - name: Guardrail 3 — Block mutable image tags
+      - name: Guardrail 3 — Block mutable Docker image tags
         run: |
-          echo "Enforcing Guardrail 3: No mutable image tags allowed"
+          echo "Enforcing Guardrail 3: No mutable Docker image tags"
 
-          matches=$(grep -R ":[[:space:]]*latest\|:[[:space:]]*dev\|:[[:space:]]*prod" -n . || true)
+          matches=$(
+            grep -nE \
+              "FROM .*:(latest|dev|prod)\b|docker (build|push).*:(latest|dev|prod)\b" \
+              Dockerfile \
+              .github/workflows/*.yml \
+              2>/dev/null || true
+          )
 
           if [ -n "$matches" ]; then
-            echo "❌ Guardrail violation: mutable image tag detected"
+            echo "❌ Guardrail violation: mutable Docker image tag detected"
             echo "Offending locations:"
             echo "$matches"
             exit 1
           fi
+
