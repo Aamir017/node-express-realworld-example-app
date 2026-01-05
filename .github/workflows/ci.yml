@@ -22,11 +22,14 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      # ------------------------------
+      # Guardrail 1 — Block secret logging
+      # ------------------------------
       - name: Guardrail 1 — Block secret logging
         run: |
           echo "Enforcing Guardrail 1: Secrets must not be logged"
 
-          if grep -R "console.log(.*process.env" -n src/; then
+          if grep -R "console\.log(.*process\.env" -n src/; then
             echo "❌ Guardrail violation detected: secret logging in source code"
             exit 1
           fi
@@ -34,22 +37,28 @@ jobs:
       - name: Run tests
         run: npm test || echo "No tests configured"
 
+      # ------------------------------
+      # Guardrail 1b — Block env dumping
+      # ------------------------------
       - name: Guardrail 1b — Block secret/env dumping
         run: |
-          echo "Enforcing Guardrail 1: No secret or env dumping"
+          echo "Enforcing Guardrail 1b: No secret or env dumping"
 
-          # Direct secret logging
+          # Direct env logging
           if grep -R "console\.log(.*process\.env" -n src/; then
             echo "❌ Guardrail violation: direct env logging detected"
             exit 1
           fi
 
-          # JSON/stringified env dumping
+          # JSON / stringified env dumping
           if grep -R "JSON\.stringify(.*process\.env" -n src/; then
             echo "❌ Guardrail violation: env dump detected"
             exit 1
           fi
 
+      # ------------------------------
+      # Guardrail 1c — Docker build context safety
+      # ------------------------------
       - name: Guardrail 1c — Protect Docker build context
         run: |
           echo "Checking Docker build context safety..."
@@ -66,30 +75,34 @@ jobs:
             exit 1
           fi
 
-
-
+      # ------------------------------
+      # Guardrail 2 — Approved base image
+      # ------------------------------
       - name: Guardrail 2 — Enforce approved base image
         run: |
           echo "Enforcing Guardrail 2: Approved base image only"
 
-          # 1. Dockerfile must exist
+          # Dockerfile must exist
           if [ ! -f Dockerfile ]; then
             echo "❌ Guardrail violation: Dockerfile not found"
             exit 1
           fi
 
-          # 2. Block 'latest' or floating node tags
+          # Block floating tags
           if grep -E "^FROM node:(latest|18)$" Dockerfile; then
             echo "❌ Guardrail violation: floating Node image tag used"
             exit 1
           fi
 
-          # 3. Enforce exact approved image
+          # Enforce exact approved image
           if ! grep -E "^FROM (docker\.io/)?node:18-alpine$" Dockerfile; then
             echo "❌ Guardrail violation: unapproved base image used"
             exit 1
           fi
 
+      # ------------------------------
+      # Guardrail 3 — Block mutable Docker tags
+      # ------------------------------
       - name: Guardrail 3 — Block mutable Docker image tags
         run: |
           echo "Enforcing Guardrail 3: No mutable Docker image tags"
@@ -109,6 +122,9 @@ jobs:
             exit 1
           fi
 
+      # ------------------------------
+      # Guardrail 3 — Phase 2: Immutable image identity
+      # ------------------------------
       - name: Guardrail 3 — Phase 2: Define immutable image identity
         run: |
           echo "Enforcing Guardrail 3 Phase 2: Immutable image tagging"
@@ -123,7 +139,9 @@ jobs:
             exit 1
           fi
 
-          if [ "$IMAGE_TAG" = "latest" ] || [ "$IMAGE_TAG" = "dev" ] || [ "$IMAGE_TAG" = "prod" ]; then
+          if [ "$IMAGE_TAG" = "latest" ] || \
+             [ "$IMAGE_TAG" = "dev" ] || \
+             [ "$IMAGE_TAG" = "prod" ]; then
             echo "❌ Guardrail violation: Mutable image tag detected"
             exit 1
           fi
