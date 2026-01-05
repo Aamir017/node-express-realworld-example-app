@@ -114,7 +114,6 @@ jobs:
             echo "$matches"
             exit 1
           fi
-
       # ------------------------------
       # Guardrail 3 — Phase 2: Immutable image identity
       # ------------------------------
