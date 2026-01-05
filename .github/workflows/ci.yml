@@ -89,3 +89,13 @@ jobs:
             echo "❌ Guardrail violation: unapproved base image used"
             exit 1
           fi
+
+
+      - name: Guardrail 3 — Block mutable image tags
+        run: |
+          echo "Enforcing Guardrail 3: No mutable image tags allowed"
+
+          if grep -R ":[[:space:]]*latest\|:[[:space:]]*dev\|:[[:space:]]*prod" -n .; then
+            echo "❌ Guardrail violation: mutable image tag detected"
+            exit 1
+          fi
