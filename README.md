@@ -73,4 +73,3 @@ Run the following command to:
 npm ci && npx prisma migrate deploy && node dist/api/main.js
 ```
 
-docker build -t myapp:latest .
