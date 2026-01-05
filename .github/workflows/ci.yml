@@ -44,13 +44,11 @@ jobs:
         run: |
           echo "Enforcing Guardrail 1b: No secret or env dumping"
 
-          # Direct env logging
           if grep -R "console\.log(.*process\.env" -n src/; then
             echo "❌ Guardrail violation: direct env logging detected"
             exit 1
           fi
 
-          # JSON / stringified env dumping
           if grep -R "JSON\.stringify(.*process\.env" -n src/; then
             echo "❌ Guardrail violation: env dump detected"
             exit 1
@@ -63,13 +61,11 @@ jobs:
         run: |
           echo "Checking Docker build context safety..."
 
-          # Ensure .dockerignore exists
           if [ ! -f .dockerignore ]; then
             echo "❌ Guardrail violation: .dockerignore missing"
             exit 1
           fi
 
-          # Ensure env files are ignored
           if ! grep -E "^\.env(\..*)?$" .dockerignore; then
             echo "❌ Guardrail violation: .env not excluded in .dockerignore"
             exit 1
@@ -82,19 +78,16 @@ jobs:
         run: |
           echo "Enforcing Guardrail 2: Approved base image only"
 
-          # Dockerfile must exist
           if [ ! -f Dockerfile ]; then
             echo "❌ Guardrail violation: Dockerfile not found"
             exit 1
           fi
 
-          # Block floating tags
           if grep -E "^FROM node:(latest|18)$" Dockerfile; then
             echo "❌ Guardrail violation: floating Node image tag used"
             exit 1
           fi
 
-          # Enforce exact approved image
           if ! grep -E "^FROM (docker\.io/)?node:18-alpine$" Dockerfile; then
             echo "❌ Guardrail violation: unapproved base image used"
             exit 1
