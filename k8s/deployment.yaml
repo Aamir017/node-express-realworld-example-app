@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: realworld-api
+  labels:
+    app: realworld-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: realworld-api
+  template:
+    metadata:
+      labels:
+        app: realworld-api
+    spec:
+      containers:
+        - name: api
+          image: realworld-api:REPLACE_WITH_SHA
+          ports:
+            - containerPort: 3000
+
+          # ------------------------------
+          # Guardrail 4 — Runtime Least Privilege
+          # ------------------------------
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
